@@ -1,0 +1,200 @@
+body {
+    font-family: Garamond, "Times New Roman", serif;
+    background-image: url('https://i.pinimg.com/1200x/68/de/86/68de862cc36cd27c1ce215a29b36fd77.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    color: #ffffff;
+}
+.main-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+}
+/* Styling for the new rectangular banner image */
+.user-image-slot {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.user-image {
+    width: 100%;
+    height: 150px; /* Adjust the height as needed */
+    object-fit: cover;
+    border-radius: 0;
+    border-bottom: 3px solid #020606;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.title-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+}
+.title {
+    font-size: 3rem;
+    font-weight: 400;
+    text-align: center;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+/* Updated styling for the topic navigation buttons */
+.topic-nav {
+    display: flex;
+    flex-wrap: wrap; /* Allows buttons to wrap to the next line */
+    justify-content: center; /* Centers the buttons horizontally */
+    gap: 0.75rem;
+    margin: 0 1.5rem 2rem 1.5rem;
+    padding: 0;
+}
+.scroll-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scroll-container::-webkit-scrollbar {
+    display: none;
+}
+.topic-button {
+    flex-grow: 1;
+    flex-basis: 12vw; /* Sets a fixed width relative to the viewport width */
+    max-width: 250px; /* Prevents buttons from getting too large on wide screens */
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background-color: #5a0909;
+    color: #ffffff;
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    border-radius: 2rem;
+    text-align: center;
+}
+.topic-button:hover, .topic-button.active {
+    background-color: #ad0e1b;
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(168, 132, 216, 0.4);
+}
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #000405;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    animation: spin 1s linear infinite;
+    display: none;
+    margin: 2rem auto;
+}
+.loading-spinner.show {
+    display: block;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.article-list-section {
+    border-radius: 1.5rem;
+    background-color: #4a080f;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    margin: 1.5rem;
+    flex-grow: 1;
+}
+.article-list-header {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+.header-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.source-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.article-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.news-article {
+    padding: 1.5rem;
+    background-color: #4f1515;
+    border-radius: 1rem;
+    box-shadow: 0.2 4px 10px rgba(179, 175, 178, 0.2);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+.news-article:hover {
+    background-color: #660000;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+.article-content {
+    flex-grow: 1;
+    margin-bottom: 1rem;
+}
+.article-title {
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 1.4rem;
+}
+.article-source {
+    font-size: 1rem;
+    color: #ffffff;
+    margin-top: 0.25rem;
+}
+.article-snippet {
+    font-size: 1.4rem;
+    color: #ffffff;
+    margin-top: 0.5rem;
+}
+.article-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    object-fit: cover;
+}
+@media (max-width: 768px) {
+    .title-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .title {
+        font-size: 1.75rem;
+    }
+    .article-list-section {
+        margin: 1rem;
+        padding: 1rem;
+    }
+    .topic-nav {
+        /* On smaller screens, buttons will wrap and have a larger relative size */
+        justify-content: space-around;
+        gap: 0.5rem;
+    }
+    .topic-button {
+        flex-basis: 40vw; /* 2 buttons per row with some spacing */
+    }
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/css?family=Garamond" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <div class="main-container">
+        <!-- The user image has been changed to a rectangular banner -->
+        <div id="image-slot" class="user-image-slot">
+            <img id="user-image" src="https://i.pinimg.com/1200x/31/ad/f1/31adf11740310e61478725a17d62668d.jpg" alt="Daily Brief Banner" class="user-image">
+        </div>
+
+        <!-- Title and Logo (Icon has been removed) -->
+        <div class="title-container">
+            <h1 class="title">DAILY BRIEF</h1>
+        </div>
+
+        <!-- Navigation with Emojis -->
+        <div id="topic-nav" class="topic-nav scroll-container">
+            <button data-topic="indian-politics" class="topic-button">🗳️ INDIAN POLITICS</button>
+            <button data-topic="finance" class="topic-button">📈 FINANCE</button>
+            <button data-topic="technology" class="topic-button">💻 TECH</button>
+            <button data-topic="sports" class="topic-button">⚽ SPORT</button>
+            <button data-topic="international" class="topic-button">🌍 INTERNATIONAL</button>
+            <button data-topic="fashion" class="topic-button">👗 FASHION</button>
+            <button data-topic="job-openings" class="topic-button">💼 JOB OPENINGS</button>
+        </div>
+
+        <!-- List of Articles -->
+        <div id="headlines-section" class="article-list-section" style="display: none;">
+            <h2 id="article-list-header" class="article-list-header">Headlines</h2>
+            <div id="news-container" class="article-list-container">
+                <div class="loading-spinner show"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

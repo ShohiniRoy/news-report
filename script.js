@@ -47,7 +47,7 @@ async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay =
 async function fetchNewsWithGemini(topic) {
     // 1. GET KEY SAFELY
     const apiKey = getApiKey(); 
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const sourceMapping = {
         'indian-politics': ["The Hindu"],

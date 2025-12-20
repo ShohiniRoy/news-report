@@ -53,7 +53,8 @@ async function fetchNewsWithGemini(topic) {
     const apiKey = getApiKey(); 
   // The standard, correct model name is 'gemini-1.5-flash'
   // Switching to gemini-1.5-pro (more reliable availability)
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    // Updated to use your available model: gemini-2.5-flash
+    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const sourceMapping = {
         'indian-politics': ["The Hindu"],
         'international': ["BBC News"],
@@ -99,7 +100,8 @@ async function fetchJobsWithGemini() {
     const apiKey = getApiKey();
     // The standard, correct model name is 'gemini-1.5-flash'
     // Switching to gemini-1.5-pro
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    // Updated to use your available model: gemini-2.5-flash
+    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const prompt = `Give me a list of 5 recent job openings from both government (specifically mentioning 'Rojgar Samachar' as a source) and well-known companies. For each, give me the job title, the company/government body name, and a one-sentence description. No URLs. Format the response as a JSON array of objects with keys "title", "company", and "description".`;
     
     const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];

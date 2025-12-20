@@ -5,7 +5,7 @@ const articleListHeader = document.getElementById('article-list-header');
 
 // This is the Gemini API key.
 const apiKey = "AIzaSyDN5iDCmC-8vB-r4iFb7CtPyGv5pAAXx_U";
-const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
 // Helper function to handle fetch calls with exponential backoff
 async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay = 1000) {

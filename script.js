@@ -31,10 +31,14 @@ async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay =
             if (response.ok) {
                 return await response.json();
             } else if (response.status === 429 && i < retries - 1) {
+                // Handle Rate Limiting
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2; 
             } else {
-                throw new Error(`API error! Status: ${response.status}`);
+                // FIX: Read the error text to see why it failed (e.g. "Model not found")
+                const errorDetails = await response.text(); 
+                console.error("Full API Error:", errorDetails); // Check your browser console!
+                throw new Error(`API error! Status: ${response.status} - ${errorDetails}`);
             }
         } catch (error) {
             if (i === retries - 1) throw error;
@@ -47,8 +51,7 @@ async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay =
 async function fetchNewsWithGemini(topic) {
     // 1. GET KEY SAFELY
     const apiKey = getApiKey(); 
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
+    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const sourceMapping = {
         'indian-politics': ["The Hindu"],
         'international': ["BBC News"],

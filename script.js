@@ -3,18 +3,34 @@ const headlinesSection = document.getElementById('headlines-section');
 const newsContainer = document.getElementById('news-container');
 const articleListHeader = document.getElementById('article-list-header');
 
-// --- SECURE KEY HANDLING ---
-// We no longer hardcode the key. We get it from the input box.
+// --- SECURE KEY HANDLING WITH STORAGE ---
 function getApiKey() {
-    const keyInput = document.getElementById('user-api-key');
-    const key = keyInput.value.trim();
-    
-    // Simple check: if empty, alert the user
+    // 1. Try to get key from Local Storage first
+    let key = localStorage.getItem("gemini_api_key");
+
+    // 2. If not in storage, check the input box
     if (!key) {
-        alert("Please paste your Gemini API Key in the box at the top first!");
-        // Throwing an error stops the rest of the code from running
+        const keyInput = document.getElementById('user-api-key');
+        if (keyInput) {
+            key = keyInput.value.trim();
+        }
+    }
+
+    // 3. If we found a key (from input), SAVE it for next time
+    if (key) {
+        localStorage.setItem("gemini_api_key", key);
+        
+        // Optional: Hide the input box since we have the key now
+        const inputContainer = document.getElementById('api-input-container'); // Assuming you have a div wrapper
+        if (inputContainer) inputContainer.style.display = 'none';
+    }
+
+    // 4. Final check: if still empty, alert the user
+    if (!key) {
+        alert("Please paste your Gemini API Key in the box first!");
         throw new Error("No API Key provided");
     }
+    
     return key;
 }
 
@@ -51,9 +67,6 @@ async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay =
 async function fetchNewsWithGemini(topic) {
     // 1. GET KEY SAFELY
     const apiKey = getApiKey(); 
-  // The standard, correct model name is 'gemini-1.5-flash'
-  // Switching to gemini-1.5-pro (more reliable availability)
-    // Updated to use your available model: gemini-2.5-flash
     const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const sourceMapping = {
         'indian-politics': ["The Hindu"],
@@ -98,9 +111,6 @@ async function fetchNewsWithGemini(topic) {
 async function fetchJobsWithGemini() {
     // 1. GET KEY SAFELY
     const apiKey = getApiKey();
-    // The standard, correct model name is 'gemini-1.5-flash'
-    // Switching to gemini-1.5-pro
-    // Updated to use your available model: gemini-2.5-flash
     const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const prompt = `Give me a list of 5 recent job openings from both government (specifically mentioning 'Rojgar Samachar' as a source) and well-known companies. For each, give me the job title, the company/government body name, and a one-sentence description. No URLs. Format the response as a JSON array of objects with keys "title", "company", and "description".`;
     

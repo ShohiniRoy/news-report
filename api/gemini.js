@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     // 2. Define the model (We stick with the working 2.5 model)
     // Note: We trim the key to avoid hidden space errors
     const cleanKey = apiKey ? apiKey.trim() : "";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${cleanKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${cleanKey}`;
 
     // 3. Prepare the data to send to Google
     // We need to modify the request to add the Date and Search Tools

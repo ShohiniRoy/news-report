@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
     // 2. Define the model (Must match your working model!)
     const cleanKey = apiKey ? apiKey.trim() : "";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${cleanKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${cleanKey}`;
 
     try {
         // 3. Forward the request to Google

@@ -3,37 +3,6 @@ const headlinesSection = document.getElementById('headlines-section');
 const newsContainer = document.getElementById('news-container');
 const articleListHeader = document.getElementById('article-list-header');
 
-// --- SECURE KEY HANDLING WITH STORAGE ---
-function getApiKey() {
-    // 1. Try to get key from Local Storage first
-    let key = localStorage.getItem("gemini_api_key");
-
-    // 2. If not in storage, check the input box
-    if (!key) {
-        const keyInput = document.getElementById('user-api-key');
-        if (keyInput) {
-            key = keyInput.value.trim();
-        }
-    }
-
-    // 3. If we found a key (from input), SAVE it for next time
-    if (key) {
-        localStorage.setItem("gemini_api_key", key);
-        
-        // Optional: Hide the input box since we have the key now
-        const inputContainer = document.getElementById('api-input-container'); // Assuming you have a div wrapper
-        if (inputContainer) inputContainer.style.display = 'none';
-    }
-
-    // 4. Final check: if still empty, alert the user
-    if (!key) {
-        alert("Please paste your Gemini API Key in the box first!");
-        throw new Error("No API Key provided");
-    }
-    
-    return key;
-}
-
 // Helper function to handle fetch calls with exponential backoff
 async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
@@ -65,9 +34,9 @@ async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay =
 }
 
 async function fetchNewsWithGemini(topic) {
-    // 1. GET KEY SAFELY
-    const apiKey = getApiKey(); 
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // CHANGE: Point to your Vercel backend file (e.g., api/gemini.js)
+    const textApiUrl = '/api/gemini'; 
+
     const sourceMapping = {
         'indian-politics': ["The Hindu"],
         'international': ["BBC News"],
@@ -83,6 +52,8 @@ async function fetchNewsWithGemini(topic) {
     const prompt = `Give me a list of 5 recent news articles on "${topic}"${sourcesPrompt}. For each article, give me a concise and engaging title, the source name, and a one-sentence summary. No URLs. Format it as a JSON array with objects, using keys: "title", "source", and "description".`;
 
     const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+    
+    // The payload structure stays the same because your backend forwards it to Google
     const payload = {
         contents: chatHistory,
         generationConfig: {
@@ -109,9 +80,9 @@ async function fetchNewsWithGemini(topic) {
 }
 
 async function fetchJobsWithGemini() {
-    // 1. GET KEY SAFELY
-    const apiKey = getApiKey();
-    const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // CHANGE: Point to your Vercel backend
+    const textApiUrl = '/api/gemini'; 
+
     const prompt = `Give me a list of 5 recent job openings from both government (specifically mentioning 'Rojgar Samachar' as a source) and well-known companies. For each, give me the job title, the company/government body name, and a one-sentence description. No URLs. Format the response as a JSON array of objects with keys "title", "company", and "description".`;
     
     const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
@@ -139,7 +110,6 @@ async function fetchJobsWithGemini() {
     if (!text) throw new Error("Invalid response from Gemini API.");
     return JSON.parse(text);
 }
-
 
 const sourceIcons = {
     'indian-politics': { name: 'The Hindu', icon: 'https://placehold.co/40x40/4c3d8e/ffffff?text=TH' },

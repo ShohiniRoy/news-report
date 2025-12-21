@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
     // 1. USE THE STABLE 2.0 FLASH MODEL (It has the best chance of working)
     // If this gives 429, we will address the "New Project" step below.
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cleanKey}`;
 
     let payload = req.body;
 

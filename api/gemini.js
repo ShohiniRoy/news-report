@@ -2,8 +2,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     const cleanKey = apiKey ? apiKey.trim() : "";
 
-    // AFTER ENABLING THE API, THIS MODEL WILL WORK
-    // It allows 1,500 requests per day (vs 20 for the other one)
+    // Keep using the model that is working for you (likely 1.5-flash or 2.0-flash-exp)
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cleanKey}`;
 
     let payload = req.body;
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
         payload.contents[0].parts[0].text = `Today is ${today}. ${originalPrompt}`;
     }
 
-    // Sanitize (Remove tools/config to prevent conflicts)
     delete payload.tools; 
     delete payload.generationConfig;
 
@@ -34,6 +32,22 @@ export default async function handler(req, res) {
         if (!response.ok) {
             return res.status(response.status).json(data);
         }
+
+        // --- 🟢 NEW FIX: CLEAN THE AI RESPONSE ---
+        try {
+            // Find the text inside the response
+            const candidate = data.candidates[0];
+            const part = candidate.content.parts[0];
+            
+            // Remove markdown code blocks (```json ... ```)
+            if (part.text) {
+                part.text = part.text.replace(/```json/g, "").replace(/```/g, "").trim();
+            }
+        } catch (cleanupError) {
+            // If the structure is different, ignore and send raw data
+            console.log("Cleanup skipped:", cleanupError);
+        }
+        // -----------------------------------------
 
         res.status(200).json(data);
     } catch (error) {

@@ -1,63 +1,134 @@
-/* News Container - The main box background */
-#news-container {
-    background-color: #3b0a0f; /* Deep Burgundy */
-    border-radius: 15px;
+/* --- 1. GLOBAL RESET & BODY --- */
+body {
+    background-color: #2a0a10; /* Deep Burgundy Background */
+    color: #ffffff;
+    font-family: 'Georgia', serif;
+    margin: 0;
     padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
 }
 
-/* Individual News Card */
+h1 {
+    font-size: 3rem;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f0f0f0;
+}
+
+/* --- 2. NAVIGATION BUTTONS --- */
+#topic-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.topic-button {
+    background-color: #4a0e16; /* Darker red button base */
+    color: #e0e0e0;
+    border: 1px solid #751a24;
+    padding: 12px 24px;
+    border-radius: 30px; /* Pill shape */
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topic-button:hover, .topic-button.active {
+    background-color: #8f2331; /* Brighter red on hover/active */
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 50, 50, 0.4);
+    transform: translateY(-2px);
+    border-color: #ff4d4d;
+}
+
+/* --- 3. NEWS CONTAINER & HEADER --- */
+#headlines-section {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+#article-list-header {
+    background-color: #3b0a0f;
+    padding: 20px;
+    border-radius: 12px 12px 0 0;
+    font-size: 1.5rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px solid #5e1119;
+}
+
+.source-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+#news-container {
+    background-color: #3b0a0f;
+    padding: 20px;
+    border-radius: 0 0 12px 12px;
+    min-height: 200px;
+}
+
+/* --- 4. NEWS CARDS (The new polished look) --- */
 .news-card {
-    background-color: #59131a; /* Lighter Red/Brown for contrast */
+    background-color: #59131a; /* Card background */
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid #d64545; /* Red accent line on left */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 5px solid #d64545; /* Red accent line */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     transition: transform 0.2s;
 }
 
 .news-card:hover {
-    transform: translateY(-2px); /* Subtle lift effect */
+    transform: translateY(-3px);
 }
 
-/* Typography */
 .article-title {
-    color: #ffffff;
-    font-family: 'Georgia', serif; /* Serif font like your screenshot */
-    font-size: 1.2rem;
-    margin: 0 0 8px 0;
-    font-weight: bold;
+    margin: 0 0 10px 0;
+    font-size: 1.25rem;
+    color: #fff;
+    line-height: 1.4;
 }
 
 .article-source {
-    color: #ff8c8c; /* Salmon/Red color for the source name */
+    color: #ff9999;
     font-size: 0.85rem;
-    font-style: italic;
-    margin-bottom: 8px;
     text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: bold;
     letter-spacing: 0.5px;
 }
 
 .article-snippet {
-    color: #e0e0e0;
+    color: #ddd;
     font-family: sans-serif;
-    line-height: 1.5;
-    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
 }
 
-/* Loading Spinner (Centered) */
+/* --- 5. LOADING SPINNER --- */
 .loading-spinner {
     border: 4px solid rgba(255, 255, 255, 0.1);
     border-left-color: #ffffff;
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
-    margin: 30px auto;
+    margin: 40px auto;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

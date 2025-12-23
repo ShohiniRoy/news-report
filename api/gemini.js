@@ -11,7 +11,8 @@ export default async function handler(req, res) {
     }
 
     const today = new Date().toDateString();
-    // 1. SIMPLIFIED PROMPT (Easier for AI to understand)
+    
+    // 1. SIMPLIFIED PROMPT
     if (payload.contents && payload.contents[0]?.parts?.[0]) {
         const originalPrompt = payload.contents[0].parts[0].text;
         payload.contents[0].parts[0].text = `
@@ -30,8 +31,7 @@ export default async function handler(req, res) {
     delete payload.generationConfig;
 
     // 3. CRITICAL: LOOSEN SAFETY FILTERS
-    // News often triggers "Hate Speech" or "Harassment" filters falsely. 
-    // We set these to "BLOCK_ONLY_HIGH" to let standard news through.
+    // This prevents the "Invalid Response" error for news topics.
     payload.safetySettings = [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
@@ -49,13 +49,12 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (!response.ok) {
-            // Log the full error from Google to help debugging
             console.error("Gemini API Error Detail:", JSON.stringify(data, null, 2));
             return res.status(response.status).json({ error: data.error?.message || "API Error" });
         }
 
         // 4. ROBUST PARSING (Text Mode)
-        // We manually find the JSON array in the text. This is 10x more reliable than Schema mode for News.
+        // We manually find the JSON array in the text. This is safer than Schema mode for News.
         let finalData = [];
         try {
             let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -63,8 +62,17 @@ export default async function handler(req, res) {
             // Clean up Markdown if it still appears
             text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-            // Parse
-            finalData = JSON.parse(text);
+            // Find the start and end of the JSON array
+            const firstBracket = text.indexOf('[');
+            const lastBracket = text.lastIndexOf(']');
+            
+            if (firstBracket !== -1 && lastBracket !== -1) {
+                text = text.substring(firstBracket, lastBracket + 1);
+                finalData = JSON.parse(text);
+            } else {
+                throw new Error("No JSON array found in response");
+            }
+            
         } catch (parseError) {
             console.error("Parsing Failed. Raw text was:", data.candidates?.[0]?.content?.parts?.[0]?.text);
             finalData = [

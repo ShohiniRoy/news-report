@@ -1,38 +1,43 @@
 export default async function handler(req, res) {
-    // 1. DISABLE CACHING (Forces fresh data)
+    // 1. DISABLE CACHING (Crucial for "Fresh News" button)
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
 
+    // 2. SETUP
     const apiKey = process.env.GEMINI_API_KEY;
+    // Using the model you confirmed works
     const modelId = "gemini-2.5-flash-lite"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
 
+    // 3. PARSE INCOMING REQUEST
     let payload = req.body;
     if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch (e) {}
     }
-
-    // Capture the strict prompt sent from frontend
     const userInstruction = payload?.contents?.[0]?.parts?.[0]?.text || "News";
-    const today = new Date().toDateString();
-    
-    // AI Request
+
+    // 4. CONSTRUCT AI REQUEST
     const aiPayload = {
         contents: [{
             parts: [{
-                // We wrap the user instruction to ensure JSON format
                 text: `
-                Date: ${today}.
+                You are a News API.
                 ${userInstruction}
                 
-                IMPORTANT: Return ONLY the raw JSON array. No Markdown. No code blocks.
+                CRITICAL RULES:
+                1. Return ONLY a raw JSON Array.
+                2. Keys must be: "title", "source", "description".
+                3. Do NOT use Markdown code blocks (no \`\`\`json).
+                4. Do NOT include any conversational text.
                 `
             }]
         }],
         generationConfig: {
+            // This forces the AI to output valid JSON, fixing the parsing error
+            responseMimeType: "application/json", 
             maxOutputTokens: 600,
-            temperature: 0.9 // Higher temperature = more variety/freshness
+            temperature: 0.7 
         }
     };
 
@@ -45,28 +50,28 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        // PARSING REAL DATA
+        // 5. ERROR HANDLING
+        if (!response.ok) {
+            console.error("❌ Google API Error:", JSON.stringify(data, null, 2));
+            // Send the specific error back to the frontend so you can see it
+            return res.status(500).json({ error: data.error?.message || "AI Service Unavailable" });
+        }
+
+        // 6. PARSE RESPONSE
         let finalData = [];
         try {
-            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            // Clean up any markdown the AI might accidentally add
-            text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-            
-            const start = text.indexOf('[');
-            const end = text.lastIndexOf(']');
-            if (start !== -1 && end !== -1) {
-                finalData = JSON.parse(text.substring(start, end + 1));
-            } else {
-                throw new Error("No JSON found");
-            }
-        } catch (e) {
-            // Return empty array on parse error (frontend handles the error message)
-            return res.status(200).json([]);
+            // Since we used responseMimeType, content should be pure JSON
+            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+            finalData = JSON.parse(text);
+        } catch (parseError) {
+            console.error("❌ JSON Parse Error. Raw text:", data.candidates?.[0]?.content?.parts?.[0]?.text);
+            return res.status(500).json({ error: "Failed to parse AI response" });
         }
 
         res.status(200).json(finalData);
 
     } catch (error) {
-        res.status(500).json({ error: "Server Error" });
+        console.error("❌ Server Error:", error);
+        res.status(500).json({ error: error.message });
     }
 }

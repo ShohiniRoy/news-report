@@ -21,7 +21,7 @@
 
         /* HEADER CONTAINER */
         header {
-            position: relative; /* Allows text to sit ON TOP of image */
+            position: relative; /* Essential for overlaying text on the image */
             width: 100%;
             height: 220px;
             border-bottom: 4px solid #5e1119;
@@ -29,28 +29,31 @@
             overflow: hidden;
         }
 
-        /* YOUR NEW IMAGE SLOT */
+        /* YOUR NEW IMAGE SLOT STYLES */
         .user-image-slot {
             width: 100%;
             height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Sits behind the text */
         }
 
         .user-image {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ensures image covers area without stretching */
-            filter: brightness(0.7); /* Darkens image slightly so text pops */
+            object-fit: cover; /* Ensures image fills the area without stretching */
+            filter: brightness(0.6); /* Darkens the image so white text is readable */
         }
 
         /* TITLE OVERLAY */
-        .header-title-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            text-align: center;
-            z-index: 2; /* Sits above the image */
+        .header-title-container {
+            position: relative;
+            z-index: 2; /* Sits ON TOP of the image */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         h1 {
@@ -59,7 +62,7 @@
             letter-spacing: 4px;
             color: #f0f0f0;
             margin: 0;
-            text-shadow: 2px 2px 4px #000; /* Shadow for readability */
+            text-shadow: 2px 2px 4px #000; /* Shadow makes text pop against image */
         }
 
         /* NAVIGATION PILLS */
@@ -199,7 +202,7 @@
             <img id="user-image" src="https://i.pinimg.com/1200x/31/ad/f1/31adf11740310e61478725a17d62668d.jpg" alt="Daily Brief Banner" class="user-image">
         </div>
 
-        <div class="header-title-overlay">
+        <div class="header-title-container">
             <h1>Daily Brief</h1>
         </div>
     </header>
@@ -252,6 +255,7 @@
 
             async function fetchFromBackend(promptText) {
                 try {
+                    // Assuming your backend is at /api/gemini
                     const response = await fetch('/api/gemini', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

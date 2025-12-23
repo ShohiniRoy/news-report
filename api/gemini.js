@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
-    // 1. CRITICAL: DISABLE CACHING
-    // This forces Vercel to run the API every single time you click the button.
+    // 1. DISABLE CACHING
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -16,7 +15,9 @@ export default async function handler(req, res) {
 
     const promptText = payload?.contents?.[0]?.parts?.[0]?.text || "News";
     const today = new Date().toDateString();
-    const timeNow = new Date().toLocaleTimeString(); // Helps you see if data is fresh
+    
+    // ✅ FIX: FORCE INDIAN STANDARD TIME (IST)
+    const timeNow = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
 
     const aiPayload = {
         contents: [{
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        // 2. BACKUP MODE (If Rate Limited)
+        // 2. BACKUP MODE
         if (!response.ok) {
             console.warn("⚠️ Google API Busy. Sending Backup.");
             
@@ -53,7 +54,7 @@ export default async function handler(req, res) {
                 { 
                     title: "⚠️ Live News Paused (Google Limit)", 
                     source: "System Alert", 
-                    description: `You are refreshing too fast. Last attempt: ${timeNow}. Please wait 60s and click again.` 
+                    description: `You are refreshing too fast. Last attempt: ${timeNow} IST. Please wait 60s.` 
                 },
                 { 
                     title: "Market Watch: Global Stocks Steady", 
@@ -80,7 +81,7 @@ export default async function handler(req, res) {
             return res.status(200).json(backupNews);
         }
 
-        // 3. SUCCESSFUL PARSING
+        // 3. PARSING
         let finalData = [];
         try {
             let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";

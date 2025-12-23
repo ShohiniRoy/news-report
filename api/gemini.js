@@ -2,7 +2,8 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     const cleanKey = apiKey ? apiKey.trim() : "";
 
-    // Keep using the model that is working for you (likely 1.5-flash or 2.0-flash-exp)
+    // ✅ Use the model that works for you (likely 1.5-flash or 2.5-flash)
+    // If 1.5-flash was giving you 404, switch this back to 'gemini-2.5-flash'
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cleanKey}`;
 
     let payload = req.body;
@@ -10,15 +11,21 @@ export default async function handler(req, res) {
         try { payload = JSON.parse(payload); } catch (e) {}
     }
 
-    // Inject Date
+    // Inject Date & Strict Formatting Instructions
     const today = new Date().toDateString();
-    if (payload.contents && payload.contents[0] && payload.contents[0].parts && payload.contents[0].parts[0]) {
+    if (payload.contents && payload.contents[0]?.parts?.[0]) {
         const originalPrompt = payload.contents[0].parts[0].text;
-        payload.contents[0].parts[0].text = `Today is ${today}. ${originalPrompt}`;
+        // We add "Return strict JSON" to the prompt to be double safe
+        payload.contents[0].parts[0].text = `Today is ${today}. Return a raw JSON list. ${originalPrompt}`;
     }
 
-    delete payload.tools; 
-    delete payload.generationConfig;
+    // 🛑 DELETE tools, but...
+    delete payload.tools;
+    
+    // ✅ ADD this configuration to force strict JSON output
+    payload.generationConfig = {
+        responseMimeType: "application/json"
+    };
 
     try {
         const response = await fetch(url, {
@@ -33,24 +40,28 @@ export default async function handler(req, res) {
             return res.status(response.status).json(data);
         }
 
-        // --- 🟢 NEW FIX: CLEAN THE AI RESPONSE ---
+        // --- CLEANUP (Just in case) ---
+        // Even with JSON mode, we check if we need to extract the text
         try {
-            // Find the text inside the response
             const candidate = data.candidates[0];
             const part = candidate.content.parts[0];
             
-            // Remove markdown code blocks (```json ... ```)
+            // If the model wrapped it in markdown, remove it. 
+            // JSON Mode usually prevents this, but this is a safety net.
             if (part.text) {
-                part.text = part.text.replace(/```json/g, "").replace(/```/g, "").trim();
+                part.text = part.text
+                    .replace(/```json/g, "")
+                    .replace(/```/g, "")
+                    .trim();
             }
-        } catch (cleanupError) {
-            // If the structure is different, ignore and send raw data
-            console.log("Cleanup skipped:", cleanupError);
+        } catch (e) {
+            console.log("Cleanup skipped", e);
         }
-        // -----------------------------------------
+        // -----------------------------
 
         res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: "Server crashed" });
+        console.error("Server Error:", error);
+        res.status(500).json({ error: "Server crashed during fetch" });
     }
 }

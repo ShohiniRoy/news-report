@@ -3,62 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Dashboard</title>
+    <title>Daily Brief - AI News</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-   <link href="https://fonts.googleapis.com/css?family=Garamond" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Georgia&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- 1. CSS STYLES --- */
+        body {
+            background-color: #2a0a10; /* Deep Burgundy */
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* HEADER CONTAINER */
+        header {
+            position: relative; /* Allows text to sit ON TOP of image */
+            width: 100%;
+            height: 220px;
+            border-bottom: 4px solid #5e1119;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        /* YOUR NEW IMAGE SLOT */
+        .user-image-slot {
+            width: 100%;
+            height: 100%;
+        }
+
+        .user-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures image covers area without stretching */
+            filter: brightness(0.7); /* Darkens image slightly so text pops */
+        }
+
+        /* TITLE OVERLAY */
+        .header-title-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            z-index: 2; /* Sits above the image */
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #f0f0f0;
+            margin: 0;
+            text-shadow: 2px 2px 4px #000; /* Shadow for readability */
+        }
+
+        /* NAVIGATION PILLS */
+        #topic-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 30px 20px;
+            background: #23080d;
+        }
+
+        .topic-button {
+            background-color: #4a0e16;
+            color: #ccc;
+            border: 1px solid #751a24;
+            padding: 12px 28px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .topic-button:hover {
+            background-color: #8f2331;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .topic-button.active {
+            background-color: #d64545; 
+            color: white;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 15px rgba(214, 69, 69, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* NEWS SECTION */
+        #headlines-section {
+            max-width: 900px;
+            margin: 0 auto 50px auto;
+            padding: 0 20px;
+        }
+
+        #article-list-header {
+            background-color: #3b0a0f;
+            padding: 25px;
+            border-radius: 12px 12px 0 0;
+            font-size: 1.8rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #5e1119;
+        }
+
+        #news-container {
+            background-color: #3b0a0f;
+            padding: 30px;
+            border-radius: 0 0 12px 12px;
+            min-height: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* CARDS */
+        .news-card {
+            background-color: #59131a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #d64545;
+            transition: transform 0.2s;
+        }
+
+        .news-card:hover {
+            transform: translateX(5px);
+            background-color: #63151d;
+        }
+
+        .article-title {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .article-source {
+            color: #ff9999;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .article-snippet {
+            color: #ddd;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        /* SPINNER */
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #d64545;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 80px auto;
+        }
+        
+        .error-msg {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="dark-mode">
-    <header style="width: 100%; overflow: hidden; height: 200px; position: relative;">
-    <img src="news-banner.jpg" alt="News Background" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-        <h1 style="color: white; font-family: 'Georgia', serif; font-size: 3rem; text-shadow: 2px 2px 4px #000;">DAILY BRIEF</h1>
-    </div>
-</header>
+<body>
 
-<nav id="topic-nav" style="margin-top: 30px;">
-    <button class="topic-button active" data-topic="indian-politics">
-        <span>🏛️ Indian Politics</span>
-    </button>
-    
-    <button class="topic-button" data-topic="finance">
-        <span>📈 Finance</span>
-    </button>
-    
-    <button class="topic-button" data-topic="tech">
-        <span>💻 Tech</span>
-    </button>
-    
-    <button class="topic-button" data-topic="sport">
-        <span>⚽ Sport</span>
-    </button>
-    
-    <button class="topic-button" data-topic="international">
-        <span>🌍 International</span>
-    </button>
-    
-    <button class="topic-button" data-topic="fashion">
-        <span>👗 Fashion</span>
-    </button>
-    
-    <button class="topic-button" data-topic="job-openings">
-        <span>💼 Job Openings</span>
-    </button>
-</nav>
+    <header>
+        <div id="image-slot" class="user-image-slot">
+            <img id="user-image" src="https://i.pinimg.com/1200x/31/ad/f1/31adf11740310e61478725a17d62668d.jpg" alt="Daily Brief Banner" class="user-image">
+        </div>
 
-<section id="headlines-section">
-    <div id="article-list-header">
-        Headlines
-    </div>
+        <div class="header-title-overlay">
+            <h1>Daily Brief</h1>
+        </div>
+    </header>
 
-    <div id="news-container">
-        <div class="loading-spinner"></div>
-    </div>
-</section>
+    <nav id="topic-nav">
+        <button class="topic-button active" data-topic="indian-politics">
+            <span>🏛️ Politics</span>
+        </button>
+        <button class="topic-button" data-topic="finance">
+            <span>📈 Finance</span>
+        </button>
+        <button class="topic-button" data-topic="tech">
+            <span>💻 Tech</span>
+        </button>
+        <button class="topic-button" data-topic="sport">
+            <span>⚽ Sport</span>
+        </button>
+        <button class="topic-button" data-topic="international">
+            <span>🌍 World</span>
+        </button>
+        <button class="topic-button" data-topic="fashion">
+            <span>👗 Fashion</span>
+        </button>
+        <button class="topic-button" data-topic="job-openings">
+            <span>💼 Jobs</span>
+        </button>
+    </nav>
 
-<script src="script.js"></script>
+    <section id="headlines-section">
+        <div id="article-list-header">Loading...</div>
+        <div id="news-container"><div class="loading-spinner"></div></div>
+    </section>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const nav = document.getElementById('topic-nav');
+            const newsContainer = document.getElementById('news-container');
+            const articleListHeader = document.getElementById('article-list-header');
+
+            const sourceConfig = {
+                'indian-politics': { name: 'The Hindu', icon: 'https://placehold.co/50/4c3d8e/FFF?text=TH' },
+                'international': { name: 'BBC News', icon: 'https://placehold.co/50/000000/FFF?text=BBC' },
+                'sport': { name: 'ESPN', icon: 'https://placehold.co/50/cc1f1f/FFF?text=SP' },
+                'tech': { name: 'Wired', icon: 'https://placehold.co/50/333333/FFF?text=TC' },
+                'finance': { name: 'Economic Times', icon: 'https://placehold.co/50/017386/FFF?text=ET' },
+                'fashion': { name: 'Vogue', icon: 'https://placehold.co/50/d64573/FFF?text=VG' },
+                'job-openings': { name: 'Rojgar Samachar', icon: 'https://placehold.co/50/1f7a2a/FFF?text=Jobs' }
+            };
+
+            async function fetchFromBackend(promptText) {
+                try {
+                    const response = await fetch('/api/gemini', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || "Server Error");
+                    }
+                    const data = await response.json();
+                    return Array.isArray(data) ? data : [];
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                    throw error;
+                }
+            }
+
+            async function loadContent(topicId) {
+                const info = sourceConfig[topicId] || { name: 'News', icon: '' };
+                
+                articleListHeader.innerHTML = `
+                    <img src="${info.icon}" style="width:50px; height:50px; border-radius:50%; border:2px solid #fff;">
+                    <span>Headlines from <span style="color:#ff9999">${info.name}</span></span>
+                `;
+                
+                newsContainer.innerHTML = '<div class="loading-spinner"></div>';
+
+                let prompt = "";
+                if (topicId === 'job-openings') {
+                    prompt = `Task: List 5 recent job openings. Format: JSON Array. Keys: title, source, description.`;
+                } else {
+                    prompt = `Topic: ${topicId}. Preferred Source: ${info.name}. Task: List 5 headlines. Format: JSON Array. Keys: title, source, description.`;
+                }
+
+                try {
+                    const articles = await fetchFromBackend(prompt);
+                    newsContainer.innerHTML = ''; 
+
+                    if (articles.length === 0) {
+                        newsContainer.innerHTML = '<div class="error-msg">No news found. Please refresh.</div>';
+                        return;
+                    }
+
+                    articles.forEach((item, index) => {
+                        setTimeout(() => {
+                            const card = document.createElement('div');
+                            card.className = 'news-card';
+                            card.innerHTML = `
+                                <h4 class="article-title">${item.title}</h4>
+                                <div class="article-source">${item.source || info.name}</div>
+                                <p class="article-snippet">${item.description}</p>
+                            `;
+                            newsContainer.appendChild(card);
+                        }, index * 100);
+                    });
+                } catch (err) {
+                    newsContainer.innerHTML = `<div class="error-msg">⚠️ Error: ${err.message}</div>`;
+                }
+            }
+
+            nav.addEventListener('click', (e) => {
+                const btn = e.target.closest('.topic-button');
+                if (btn) {
+                    document.querySelectorAll('.topic-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const topic = btn.getAttribute('data-topic');
+                    loadContent(topic);
+                }
+            });
+
+            loadContent('indian-politics');
+        });
+    </script>
 </body>
 </html>

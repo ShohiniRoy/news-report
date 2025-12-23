@@ -3,40 +3,12 @@ const headlinesSection = document.getElementById('headlines-section');
 const newsContainer = document.getElementById('news-container');
 const articleListHeader = document.getElementById('article-list-header');
 
-// Helper function to handle fetch calls with exponential backoff
-async function fetchWithExponentialBackoff(apiUrl, payload, retries = 3, delay = 1000) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                return await response.json();
-            } else if (response.status === 429 && i < retries - 1) {
-                // Handle Rate Limiting
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; 
-            } else {
-                // FIX: Read the error text to see why it failed (e.g. "Model not found")
-                const errorDetails = await response.text(); 
-                console.error("Full API Error:", errorDetails); // Check your browser console!
-                throw new Error(`API error! Status: ${response.status} - ${errorDetails}`);
-            }
-        } catch (error) {
-            if (i === retries - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
-        }
-    }
-}
-
+// 1. FIXED FETCH FUNCTION
+// This now expects a simple Array from your backend, not the complex Google object.
 async function fetchNewsWithGemini(topic) {
-    // CHANGE: Point to your Vercel backend file (e.g., api/gemini.js)
     const textApiUrl = '/api/gemini'; 
 
+    // We keep your source logic, it's good.
     const sourceMapping = {
         'indian-politics': ["The Hindu"],
         'international': ["BBC News"],
@@ -47,69 +19,80 @@ async function fetchNewsWithGemini(topic) {
     };
 
     const specificSources = sourceMapping[topic] || [];
-    const sourcesPrompt = specificSources.length > 0 ? ` from the following sources: ${specificSources.join(', ')}` : "";
+    const sourcesPrompt = specificSources.length > 0 ? ` from: ${specificSources.join(', ')}` : "";
     
-    const prompt = `Give me a list of 5 recent news articles on "${topic}"${sourcesPrompt}. For each article, give me a concise and engaging title, the source name, and a one-sentence summary. No URLs. Format it as a JSON array with objects, using keys: "title", "source", and "description".`;
+    // Simplified prompt for the Lite model
+    const prompt = `Topic: "${topic}"${sourcesPrompt}. Task: List 5 news headlines. Format: JSON Array. Keys: title, source, description.`;
 
-    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-    
-    // The payload structure stays the same because your backend forwards it to Google
     const payload = {
-        contents: chatHistory,
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "title": { "type": "STRING" },
-                        "source": { "type": "STRING" },
-                        "description": { "type": "STRING" }
-                    },
-                    "propertyOrdering": ["title", "source", "description"]
-                }
-            }
-        }
+        contents: [{ parts: [{ text: prompt }] }]
+        // Note: We removed the strict schema here because the backend handles it now.
     };
 
-    const result = await fetchWithExponentialBackoff(textApiUrl, payload);
-    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Invalid response from Gemini API.");
-    return JSON.parse(text);
+    try {
+        const response = await fetch(textApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "Server Error");
+        }
+
+        const data = await response.json();
+
+        // CRITICAL FIX: The backend now sends the array directly!
+        if (Array.isArray(data)) {
+            return data;
+        } else {
+            console.error("Unexpected data:", data);
+            return []; // Return empty list instead of crashing
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        throw error;
+    }
 }
 
+// 2. FIXED JOBS FUNCTION
 async function fetchJobsWithGemini() {
-    // CHANGE: Point to your Vercel backend
     const textApiUrl = '/api/gemini'; 
 
-    const prompt = `Give me a list of 5 recent job openings from both government (specifically mentioning 'Rojgar Samachar' as a source) and well-known companies. For each, give me the job title, the company/government body name, and a one-sentence description. No URLs. Format the response as a JSON array of objects with keys "title", "company", and "description".`;
+    const prompt = `Task: List 5 recent job openings (Govt 'Rojgar Samachar' + Private). Format: JSON Array. Keys: title, company, description.`;
     
-    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
     const payload = {
-        contents: chatHistory,
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "title": { "type": "STRING" },
-                        "company": { "type": "STRING" },
-                        "description": { "type": "STRING" }
-                    },
-                    "propertyOrdering": ["title", "company", "description"]
-                }
-            }
-        }
+        contents: [{ parts: [{ text: prompt }] }]
     };
 
-    const result = await fetchWithExponentialBackoff(textApiUrl, payload);
-    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Invalid response from Gemini API.");
-    return JSON.parse(text);
+    try {
+        const response = await fetch(textApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "Server Error");
+        }
+
+        const data = await response.json();
+
+        // CRITICAL FIX: Check for array directly
+        if (Array.isArray(data)) {
+            return data;
+        } else {
+            return []; 
+        }
+    } catch (error) {
+        console.error("Fetch Jobs Error:", error);
+        throw error;
+    }
 }
+
+// --- The rest of your UI logic remains mostly the same ---
 
 const sourceIcons = {
     'indian-politics': { name: 'The Hindu', icon: 'https://placehold.co/40x40/4c3d8e/ffffff?text=TH' },
@@ -124,102 +107,102 @@ const sourceIcons = {
 async function renderHeadlines(topic) {
     headlinesSection.style.display = 'block';
     const sourceInfo = sourceIcons[topic];
+    
+    // Update Header
     if (sourceInfo) {
         articleListHeader.innerHTML = `
-            <div class="header-with-icon">
-                <img src="${sourceInfo.icon}" alt="${sourceInfo.name} Icon" class="source-icon">
+            <div class="header-with-icon" style="display:flex; align-items:center; gap:10px;">
+                <img src="${sourceInfo.icon}" alt="${sourceInfo.name}" class="source-icon" style="border-radius:50%;">
                 Headlines from ${sourceInfo.name}
             </div>`;
     } else {
         articleListHeader.textContent = 'Headlines';
     }
     
-    newsContainer.innerHTML = `<div class="loading-spinner show"></div>`;
+    // Show Loading
+    newsContainer.innerHTML = `<div class="loading-spinner show" style="text-align:center; padding:20px;">Loading news...</div>`;
+
     try {
+        // Fetch Data
         const articles = await fetchNewsWithGemini(topic);
+        
+        // Clear Loading
         newsContainer.innerHTML = ''; 
-        if (articles && articles.length >= 5) {
+
+        if (articles && articles.length > 0) {
             articles.forEach(article => {
-                const articleHtml = `
-                    <div class="news-article">
-                        <div class="article-content">
-                            <h4 class="article-title">${article.title}</h4>
-                            <p class="article-source">${article.source}</p>
-                            <p class="article-snippet">${article.description}</p>
-                        </div>
+                const articleElement = document.createElement('div');
+                articleElement.className = 'news-article'; // Ensure you have CSS for this class
+                articleElement.innerHTML = `
+                    <div class="article-content" style="margin-bottom: 20px; padding: 15px; background: #2a0a18; border-radius: 8px;">
+                        <h4 class="article-title" style="color: #fff; margin: 0 0 5px 0;">${article.title}</h4>
+                        <p class="article-source" style="color: #bbb; font-size: 0.9em; margin: 0 0 10px 0;">${article.source}</p>
+                        <p class="article-snippet" style="color: #ddd;">${article.description}</p>
                     </div>
                 `;
-                const articleElement = document.createElement('div');
-                articleElement.innerHTML = articleHtml;
                 newsContainer.appendChild(articleElement);
             });
         } else {
-            newsContainer.innerHTML = `<p class="text-red-500">Not enough headlines found for this topic.</p>`;
+            newsContainer.innerHTML = `<p style="color:white;">No headlines found. Please try again.</p>`;
         }
     } catch (error) {
-        console.error("Error fetching news:", error);
-        // Only show error in UI if it's not the missing key error (which already alerts)
-        if(error.message !== "No API Key provided") {
-            newsContainer.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-        } else {
-             newsContainer.innerHTML = `<p>Please enter API key above.</p>`;
-        }
+        newsContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
 }
 
 async function renderJobs() {
     headlinesSection.style.display = 'block';
     const sourceInfo = sourceIcons['job-openings'];
+    
     if (sourceInfo) {
         articleListHeader.innerHTML = `
-            <div class="header-with-icon">
-                <img src="${sourceInfo.icon}" alt="${sourceInfo.name} Icon" class="source-icon">
+            <div class="header-with-icon" style="display:flex; align-items:center; gap:10px;">
+                <img src="${sourceInfo.icon}" alt="${sourceInfo.name}" class="source-icon" style="border-radius:50%;">
                 Job Openings from ${sourceInfo.name}
             </div>`;
     } else {
         articleListHeader.textContent = 'Job Openings';
     }
 
-    newsContainer.innerHTML = `<div class="loading-spinner show"></div>`;
+    newsContainer.innerHTML = `<div class="loading-spinner show" style="text-align:center; padding:20px;">Finding jobs...</div>`;
+
     try {
         const jobs = await fetchJobsWithGemini();
         newsContainer.innerHTML = ''; 
-        if (jobs && jobs.length >= 5) {
+
+        if (jobs && jobs.length > 0) {
             jobs.forEach(job => {
-                const jobHtml = `
-                    <div class="news-article">
-                        <div class="article-content">
-                            <h4 class="article-title">${job.title}</h4>
-                            <p class="article-source">${job.company}</p>
-                            <p class="article-snippet">${job.description}</p>
-                        </div>
+                const jobElement = document.createElement('div');
+                jobElement.className = 'news-article';
+                jobElement.innerHTML = `
+                    <div class="article-content" style="margin-bottom: 20px; padding: 15px; background: #2a0a18; border-radius: 8px;">
+                        <h4 class="article-title" style="color: #fff; margin: 0 0 5px 0;">${job.title}</h4>
+                        <p class="article-source" style="color: #bbb; font-size: 0.9em; margin: 0 0 10px 0;">${job.company}</p>
+                        <p class="article-snippet" style="color: #ddd;">${job.description}</p>
                     </div>
                 `;
-                const jobElement = document.createElement('div');
-                jobElement.innerHTML = jobHtml;
                 newsContainer.appendChild(jobElement);
             });
         } else {
-            newsContainer.innerHTML = `<p class="text-red-500">Not enough job openings found.</p>`;
+            newsContainer.innerHTML = `<p style="color:white;">No jobs found at this moment.</p>`;
         }
     } catch (error) {
-        console.error("Error fetching jobs:", error);
-        if(error.message !== "No API Key provided") {
-            newsContainer.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-        } else {
-             newsContainer.innerHTML = `<p>Please enter API key above.</p>`;
-        }
+        newsContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
 }
 
+// Event Listener
 nav.addEventListener('click', (event) => {
-    if (event.target.tagName === 'BUTTON') {
+    // Handle both button clicks and clicks on icons inside buttons
+    const button = event.target.closest('button'); 
+    
+    if (button) {
         const buttons = nav.querySelectorAll('.topic-button');
-        buttons.forEach(button => button.classList.remove('active'));
+        buttons.forEach(btn => btn.classList.remove('active'));
         
-        event.target.classList.add('active');
+        button.classList.add('active');
 
-        const topic = event.target.getAttribute('data-topic');
+        const topic = button.getAttribute('data-topic');
         if (topic === 'job-openings') {
             renderJobs();
         } else {

@@ -2,29 +2,46 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
     const cleanKey = apiKey ? apiKey.trim() : "";
 
-    // ✅ Use the model that works for you (likely 1.5-flash or 2.5-flash)
-    // If 1.5-flash was giving you 404, switch this back to 'gemini-2.5-flash'
+    // ✅ CORRECT MODEL: Using Gemini 2.5 Flash
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cleanKey}`;
 
     let payload = req.body;
+    
+    // Safety check: ensure payload is an object
     if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch (e) {}
     }
 
-    // Inject Date & Strict Formatting Instructions
+    // 1. Inject Date & Prompt Logic
     const today = new Date().toDateString();
     if (payload.contents && payload.contents[0]?.parts?.[0]) {
         const originalPrompt = payload.contents[0].parts[0].text;
-        // We add "Return strict JSON" to the prompt to be double safe
-        payload.contents[0].parts[0].text = `Today is ${today}. Return a raw JSON list. ${originalPrompt}`;
+        payload.contents[0].parts[0].text = `
+            Today is ${today}. 
+            ${originalPrompt}
+            RETURN ONLY JSON. Do not use Markdown.
+        `;
     }
 
-    // 🛑 DELETE tools, but...
+    // 2. Remove conflicting configs
     delete payload.tools;
-    
-    // ✅ ADD this configuration to force strict JSON output
+    delete payload.generationConfig;
+
+    // 3. FORCE STRICT JSON STRUCTURE (Critical for Gemini 2.5)
+    // This tells the AI exactly what fields to return, preventing syntax errors.
     payload.generationConfig = {
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: "ARRAY",
+            items: {
+                type: "OBJECT",
+                properties: {
+                    title: { type: "STRING" },
+                    description: { type: "STRING" },
+                    source: { type: "STRING" }
+                }
+            }
+        }
     };
 
     try {
@@ -37,31 +54,25 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (!response.ok) {
+            console.error("Gemini API Error:", data);
             return res.status(response.status).json(data);
         }
 
-        // --- CLEANUP (Just in case) ---
-        // Even with JSON mode, we check if we need to extract the text
+        // 4. PARSE & VALIDATE ON SERVER
+        let finalData = [];
         try {
-            const candidate = data.candidates[0];
-            const part = candidate.content.parts[0];
-            
-            // If the model wrapped it in markdown, remove it. 
-            // JSON Mode usually prevents this, but this is a safety net.
-            if (part.text) {
-                part.text = part.text
-                    .replace(/```json/g, "")
-                    .replace(/```/g, "")
-                    .trim();
-            }
-        } catch (e) {
-            console.log("Cleanup skipped", e);
+            // Gemini 2.5 Structured Output usually puts the JSON directly in the text
+            const candidateText = data.candidates[0].content.parts[0].text;
+            finalData = JSON.parse(candidateText);
+        } catch (parseError) {
+            console.error("JSON Parse Failed:", parseError);
+            finalData = [{ title: "News Unavailable", description: "Could not parse news data.", source: "System" }];
         }
-        // -----------------------------
 
-        res.status(200).json(data);
+        res.status(200).json(finalData);
+
     } catch (error) {
-        console.error("Server Error:", error);
-        res.status(500).json({ error: "Server crashed during fetch" });
+        console.error("Server Execution Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }

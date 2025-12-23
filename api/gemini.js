@@ -1,7 +1,11 @@
 export default async function handler(req, res) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    // 1. CRITICAL: DISABLE CACHING
+    // This forces Vercel to run the API every single time you click the button.
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
-    // 1. USE THE LITE MODEL
+    const apiKey = process.env.GEMINI_API_KEY;
     const modelId = "gemini-2.5-flash-lite"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
 
@@ -12,6 +16,7 @@ export default async function handler(req, res) {
 
     const promptText = payload?.contents?.[0]?.parts?.[0]?.text || "News";
     const today = new Date().toDateString();
+    const timeNow = new Date().toLocaleTimeString(); // Helps you see if data is fresh
 
     const aiPayload = {
         contents: [{
@@ -40,16 +45,15 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        // 2. THE "BACKUP MODE" FIX
-        // If Google says "Service Busy" (Error 429/503), we return fake data instead of crashing.
+        // 2. BACKUP MODE (If Rate Limited)
         if (!response.ok) {
-            console.warn("⚠️ Rate Limit Hit. Switching to Backup Data.");
+            console.warn("⚠️ Google API Busy. Sending Backup.");
             
             const backupNews = [
                 { 
-                    title: "Live News Temporarily Paused (Rate Limit)", 
+                    title: "⚠️ Live News Paused (Google Limit)", 
                     source: "System Alert", 
-                    description: "You are refreshing too fast. Real-time news will return in 60 seconds." 
+                    description: `You are refreshing too fast. Last attempt: ${timeNow}. Please wait 60s and click again.` 
                 },
                 { 
                     title: "Market Watch: Global Stocks Steady", 
@@ -73,7 +77,6 @@ export default async function handler(req, res) {
                 }
             ];
             
-            // We return 200 (Success) with backup data, so the frontend stays happy.
             return res.status(200).json(backupNews);
         }
 
@@ -91,14 +94,12 @@ export default async function handler(req, res) {
                 throw new Error("No JSON found");
             }
         } catch (e) {
-            // If parsing fails, use the same backup data
             finalData = [{ title: "News Loading...", source: "System", description: "Please wait a moment." }];
         }
 
         res.status(200).json(finalData);
 
     } catch (error) {
-        // Even if the server crashes, return empty list so no red box appears
         res.status(200).json([]);
     }
 }

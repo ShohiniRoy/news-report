@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
     // AFTER ENABLING THE API, THIS MODEL WILL WORK
     // It allows 1,500 requests per day (vs 20 for the other one)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${cleanKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5:generateContent?key=${cleanKey}`;
 
     let payload = req.body;
     if (typeof payload === 'string') {

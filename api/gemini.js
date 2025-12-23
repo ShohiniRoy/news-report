@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     const cleanKey = apiKey ? apiKey.trim() : "";
 
     // ✅ OPTION 1: Standard Flash (Try this first)
-    let modelName = 'gemini-2.5-flash';
+    let modelName = 'gemini-2.5-flash-lite';
     
     // ⚡ OPTION 2: Use "Lite" if you still get timeouts (Uncomment next line)
     // modelName = 'gemini-2.5-flash-lite'; 

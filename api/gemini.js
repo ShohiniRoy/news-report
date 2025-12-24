@@ -1,4 +1,4 @@
-// api/gemini.js
+// api/gemini.js - Updated to handle source mapping correctly
 export default async function handler(req, res) {
     // 1. DISABLE CACHING
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -15,72 +15,67 @@ export default async function handler(req, res) {
     
     const promptText = payload?.contents?.[0]?.parts?.[0]?.text || "";
     
-    // Extract the news source from the prompt
-    let newsSource = "BBC News";
-    let category = "general";
+    // Parse format: "Category|Source" or just "Category"
+    const parts = promptText.split('|');
+    const category = parts[0] || "";
+    const explicitSource = parts[1] || "";
     
-    if (promptText.includes("Politics")) {
-        newsSource = "BBC News";
-        category = "politics";
-    } else if (promptText.includes("Sport")) {
-        newsSource = "ESPN";
-        category = "sports";
-    } else if (promptText.includes("Finance")) {
-        newsSource = "Bloomberg";
-        category = "finance";
-    } else if (promptText.includes("Tech")) {
-        newsSource = "Wired";
-        category = "technology";
-    } else if (promptText.includes("Fashion")) {
-        newsSource = "Vogue";
-        category = "fashion";
-    } else if (promptText.includes("World")) {
-        newsSource = "CNN";
-        category = "world news";
-    } else if (promptText.includes("Jobs")) {
-        newsSource = "Financial Times";
-        category = "business and jobs";
-    }
+    // Define source mapping
+    const sourceMap = {
+        "Politics": explicitSource || "The Hindu",
+        "Finance": explicitSource || "Economic Times",
+        "Tech": explicitSource || "Wired",
+        "Sport": explicitSource || "ESPN",
+        "World": explicitSource || "BBC News",
+        "Fashion": explicitSource || "Vogue",
+        "Jobs": explicitSource || "LinkedIn News"
+    };
+    
+    const newsSource = sourceMap[category] || "BBC News";
+    const categoryName = category.toLowerCase();
 
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
 
-    // 3. CONSTRUCT AI PAYLOAD WITH ENHANCED PROMPT
+    // 3. CONSTRUCT AI PAYLOAD WITH SOURCE-SPECIFIC PROMPT
     const aiPayload = {
         contents: [{
             parts: [{
                 text: `You are a real-time news aggregator. Today's date is ${today}.
 
-Fetch the LATEST and MOST RECENT news headlines from ${newsSource} about ${category}.
+Fetch the LATEST and MOST RECENT news headlines specifically from "${newsSource}" about ${categoryName}.
 
-IMPORTANT INSTRUCTIONS:
-1. Provide REAL, CURRENT news from ${newsSource} - not generic or placeholder content
-2. Each article must be from TODAY or the last 24-48 hours
-3. Include actual, specific details from real news stories
-4. Return EXACTLY 5-7 recent articles
+CRITICAL REQUIREMENTS:
+1. ALL articles MUST be from "${newsSource}" - no other sources
+2. Provide REAL, CURRENT news from TODAY or the last 24-48 hours
+3. Include actual headlines with specific names, places, numbers, and details
+4. Each description must have concrete facts from the actual story
+5. Return EXACTLY 5-8 recent articles
 
-Return ONLY a raw JSON Array with this structure:
+Return ONLY a raw JSON Array with this exact structure:
 [
   {
-    "title": "Specific, real headline from ${newsSource}",
-    "source": "${newsSource} (ARCHIVED)",
-    "description": "Detailed 2-3 sentence summary with specific facts and details from the actual article"
+    "title": "Actual specific headline from ${newsSource}",
+    "source": "${newsSource}",
+    "description": "Detailed 2-3 sentence summary with specific facts, names, and numbers from the actual article. Include key details that make this story unique and newsworthy."
   }
 ]
 
-Rules:
-- NO markdown code blocks
-- NO generic placeholders like "New policy announced" 
-- Use REAL headlines with specific names, places, numbers
-- Include actual details from current events
-- Make descriptions informative and specific
-- Return ONLY the JSON array, nothing else`
+STRICT RULES:
+- NO markdown code blocks or formatting
+- NO generic placeholders like "New policy announced" or "Breaking news"
+- Use REAL headlines from ${newsSource} with actual specifics
+- Include real names of people, places, companies, or events
+- Make descriptions informative with concrete details
+- Every article MUST clearly be from ${newsSource}
+- Return ONLY the JSON array, absolutely nothing else`
             }]
         }],
         generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 2000,
-            temperature: 0.7
+            maxOutputTokens: 2500,
+            temperature: 0.8,
+            topP: 0.95
         }
     };
 
@@ -95,10 +90,8 @@ Rules:
 
         // 4. HANDLE RATE LIMITS OR ERRORS
         if (!response.ok) {
-            console.warn(`⚠️ API Error (${response.status}). Retrying with simpler prompt...`);
-            
-            // Retry with a simpler, more direct prompt
-            return await retryWithSimplePrompt(url, newsSource, category, today, res);
+            console.warn(`⚠️ API Error (${response.status}). Retrying...`);
+            return await retryWithSimplePrompt(url, newsSource, categoryName, today, res);
         }
 
         // 5. PARSE SUCCESSFUL DATA
@@ -113,31 +106,30 @@ Rules:
             
             // Validate that we got real data
             if (!Array.isArray(finalData) || finalData.length === 0) {
-                throw new Error("Empty or invalid response");
+                throw new Error("Empty response");
             }
             
-            // Ensure each article has required fields
+            // Ensure each article has required fields and correct source
             finalData = finalData.map(article => ({
                 title: article.title || "News Update",
-                source: article.source || newsSource,
-                description: article.description || "Live updates are being fetched..."
-            }));
+                source: newsSource, // Force correct source
+                description: article.description || "Loading details..."
+            })).slice(0, 8); // Limit to 8 articles
             
         } catch (e) {
             console.error("Parse error:", e.message);
-            // If parsing fails, retry with simpler prompt
-            return await retryWithSimplePrompt(url, newsSource, category, today, res);
+            return await retryWithSimplePrompt(url, newsSource, categoryName, today, res);
         }
 
         res.status(200).json(finalData);
 
     } catch (error) {
         console.error("❌ Server Error:", error.message);
-        // Last resort: return a message asking to retry
+        // Return error message with correct source
         res.status(200).json([{
-            title: "Unable to Load Current News",
+            title: "Service Temporarily Unavailable",
             source: newsSource,
-            description: "We're having trouble fetching the latest news. Please refresh the page or try again in a moment."
+            description: "We're experiencing high traffic. Please try refreshing the page in a few seconds."
         }]);
     }
 }
@@ -147,18 +139,20 @@ async function retryWithSimplePrompt(url, newsSource, category, today, res) {
     const simplePayload = {
         contents: [{
             parts: [{
-                text: `List 5 current ${category} news headlines from ${newsSource} for ${today}. 
+                text: `Get 6 current ${category} news headlines from ${newsSource} for ${today}.
 
-Format as JSON array:
-[{"title": "headline", "source": "${newsSource} (ARCHIVED)", "description": "summary"}]
+Use real, specific headlines with actual details. 
 
-Be specific and use real current events. Return only JSON.`
+Return as JSON array:
+[{"title": "specific headline", "source": "${newsSource}", "description": "detailed summary with facts"}]
+
+Only JSON, no other text.`
             }]
         }],
         generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 1500,
-            temperature: 0.5
+            maxOutputTokens: 1800,
+            temperature: 0.7
         }
     };
 
@@ -175,17 +169,24 @@ Be specific and use real current events. Return only JSON.`
             let text = retryData.candidates[0].content.parts[0].text;
             text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             
-            const articles = JSON.parse(text);
+            let articles = JSON.parse(text);
+            
+            // Ensure correct source
+            articles = articles.map(a => ({
+                ...a,
+                source: newsSource
+            }));
+            
             return res.status(200).json(articles);
         }
     } catch (e) {
         console.error("Retry failed:", e.message);
     }
 
-    // If everything fails, return a helpful message
+    // Final fallback with correct source
     return res.status(200).json([{
-        title: "Service Temporarily Unavailable",
+        title: "Unable to Load Current News",
         source: newsSource,
-        description: "We're experiencing high traffic. Please try refreshing the page in a few seconds."
+        description: `We're having trouble connecting to ${newsSource}. Please refresh the page or try again in a moment.`
     }]);
 }

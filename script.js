@@ -1,43 +1,52 @@
-// script.js - Frontend for multi-source news
+// script.js - Fixed version with correct source mapping per tab
 
 // Map each tab to its specific news source
 const NEWS_SOURCES = {
     politics: {
-        source: "BBC News",
-        prompt: "Politics"
+        source: "The Hindu",
+        prompt: "Politics",
+        displayName: "The Hindu"
     },
     finance: {
-        source: "Bloomberg",
-        prompt: "Finance"
+        source: "Economic Times",
+        prompt: "Finance",
+        displayName: "Economic Times"
     },
     tech: {
         source: "Wired",
-        prompt: "Tech"
+        prompt: "Tech",
+        displayName: "Wired"
     },
     sport: {
         source: "ESPN",
-        prompt: "Sport"
+        prompt: "Sport",
+        displayName: "ESPN"
     },
     world: {
-        source: "CNN",
-        prompt: "World"
+        source: "BBC News",
+        prompt: "World",
+        displayName: "BBC News"
     },
     fashion: {
         source: "Vogue",
-        prompt: "Fashion"
+        prompt: "Fashion",
+        displayName: "Vogue"
     },
     jobs: {
-        source: "Financial Times",
-        prompt: "Jobs"
+        source: "LinkedIn News",
+        prompt: "Jobs",
+        displayName: "LinkedIn News"
     }
 };
 
-let currentCategory = 'tech';
+let currentCategory = 'politics';
+let currentSource = NEWS_SOURCES.politics.displayName;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
-    loadNews('tech');
+    updateHeaderSource(currentSource);
+    loadNews('politics');
 });
 
 // Setup tab click handlers
@@ -55,9 +64,23 @@ function setupTabs() {
             // Get category and load news
             const category = tab.dataset.category;
             currentCategory = category;
+            currentSource = NEWS_SOURCES[category].displayName;
+            
+            // Update the header to show current source
+            updateHeaderSource(currentSource);
+            
+            // Load news
             loadNews(category);
         });
     });
+}
+
+// Update the header to show which source we're viewing
+function updateHeaderSource(sourceName) {
+    const headerElement = document.querySelector('.logo h1 .highlight');
+    if (headerElement) {
+        headerElement.textContent = sourceName;
+    }
 }
 
 // Load news for a specific category/source
@@ -69,12 +92,12 @@ async function loadNews(category) {
     newsContainer.innerHTML = `
         <div class="loading">
             <div class="spinner"></div>
-            <p>Fetching latest news from ${sourceConfig.source}...</p>
+            <p>Fetching latest news from ${sourceConfig.displayName}...</p>
         </div>
     `;
     
     try {
-        // Call your Gemini API
+        // Call your Gemini API with the specific source
         const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: {
@@ -83,7 +106,7 @@ async function loadNews(category) {
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: sourceConfig.prompt
+                        text: `${sourceConfig.prompt}|${sourceConfig.source}`
                     }]
                 }]
             })
@@ -92,13 +115,13 @@ async function loadNews(category) {
         const articles = await response.json();
         
         // Display the news
-        displayNews(articles, sourceConfig.source);
+        displayNews(articles, sourceConfig.displayName);
         
     } catch (error) {
         console.error('Error loading news:', error);
         newsContainer.innerHTML = `
             <div class="error-message">
-                <h3>Unable to load news</h3>
+                <h3>Unable to load news from ${sourceConfig.displayName}</h3>
                 <p>Please check your connection and try again.</p>
                 <button onclick="loadNews('${category}')" class="retry-button">
                     Retry
@@ -115,7 +138,7 @@ function displayNews(articles, sourceName) {
     if (!articles || articles.length === 0) {
         newsContainer.innerHTML = `
             <div class="no-news">
-                <h3>No articles available</h3>
+                <h3>No articles available from ${sourceName}</h3>
                 <p>Please try another category or refresh the page.</p>
             </div>
         `;
@@ -127,7 +150,7 @@ function displayNews(articles, sourceName) {
         <div class="news-card">
             <div class="news-content">
                 <div class="news-source-badge">
-                    ${article.source}
+                    ${article.source || sourceName}
                 </div>
                 <h2 class="news-title">${article.title}</h2>
                 <p class="news-description">${article.description}</p>
@@ -143,21 +166,15 @@ function displayNews(articles, sourceName) {
     newsContainer.innerHTML = articlesHTML;
 }
 
-// Optional: Auto-refresh news every 5 minutes
-let refreshInterval;
-
-function startAutoRefresh() {
-    // Clear any existing interval
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-    }
+// Optional: Add refresh button
+function addRefreshButton() {
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'refresh-button';
+    refreshBtn.innerHTML = '🔄 Refresh';
+    refreshBtn.onclick = () => loadNews(currentCategory);
     
-    // Refresh every 5 minutes (300000ms)
-    refreshInterval = setInterval(() => {
-        console.log('Auto-refreshing news...');
-        loadNews(currentCategory);
-    }, 300000);
+    const container = document.querySelector('.container');
+    if (container && !document.querySelector('.refresh-button')) {
+        container.insertBefore(refreshBtn, document.getElementById('news-container'));
+    }
 }
-
-// Call this if you want auto-refresh
-// startAutoRefresh();

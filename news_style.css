@@ -1,0 +1,175 @@
+:root {
+    --primary-red: #c92a2a;
+    --nav-bg: #2b0f0f;
+    --bg-dark: #1a0505;
+    --card-bg: #2c1212; /* Darker card background */
+    --text-light: #ffffff;
+    --text-muted: #b0b0b0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    min-height: 100vh;
+}
+
+/* --- HEADER --- */
+header {
+    background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://www.transparenttextures.com/patterns/cubes.png');
+    background-color: #333;
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 4px solid var(--primary-red);
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 15px;
+}
+
+#search-input {
+    padding: 8px 15px;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 20px;
+    border: none;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* --- NAV --- */
+nav {
+    background-color: var(--nav-bg);
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #4a1a1a;
+}
+
+.nav-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.nav-btn {
+    background-color: #3e1818;
+    color: #ccc;
+    border: 1px solid #552222;
+    padding: 6px 16px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.nav-btn:hover { background-color: #5e2222; color: white; }
+.nav-btn.active { background-color: var(--primary-red); color: white; border-color: #ff5555; }
+#btn-saved.active { background-color: #ffd700; color: #1a0505; }
+
+/* --- MAIN --- */
+main { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+
+.source-header {
+    display: flex; align-items: center; margin-bottom: 25px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-red);
+}
+
+.source-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: white; }
+
+/* --- COMPACT NEWS LIST --- */
+.news-grid { display: flex; flex-direction: column; gap: 15px; }
+
+.news-card {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #444; /* Default border */
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.news-card:hover {
+    background-color: #361515;
+    border-left-color: var(--primary-red);
+    transform: translateX(5px);
+}
+
+/* Title & Header Row */
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: #fff;
+    line-height: 1.2;
+    margin-right: 15px;
+}
+
+/* Meta Data (Source & Date) */
+.card-meta {
+    font-size: 0.7rem;
+    color: #ff8a80; /* Light red */
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* Description Text */
+.card-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Links */
+.card-link {
+    font-size: 0.8rem;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    align-self: flex-start;
+    border-bottom: 1px dotted #666;
+}
+.card-link:hover { color: var(--primary-red); border-bottom-style: solid; }
+
+/* Bookmark Button (Text-based now) */
+.bookmark-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #444;
+    line-height: 1;
+    padding: 0;
+    min-width: 24px;
+}
+.bookmark-btn:hover { color: #fff; }
+.bookmark-btn.saved { color: #ffd700; }
+
+.loader { text-align: center; color: #888; padding: 40px; }

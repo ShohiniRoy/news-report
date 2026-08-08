@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Daily Aggregator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Global Daily Aggregator</h1>
+        <p>Curated news from top sources around the web</p>
+    </header>
+
+    <main id="news-container">
+        <!-- News categories will be injected here by JavaScript -->
+        <div class="loading">Fetching the latest news...</div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /* --- CONFIGURATION --- */
-const API_KEY = '423abcbb1ad74cde87d8e3f9892458f6'; 
-const GEMINI_API_KEY = 'AIzaSyA2HwK3zNiHaQ5VhG4dcCkeW5sIld0boeY'; 
+const API_KEY = 'YOUR API KEY'; 
+const GEMINI_API_KEY = 'YOUR API KEY'; 
 
 const newsApiMap = {
     politics: 'general', finance: 'business', tech: 'technology',
